@@ -17,7 +17,10 @@
 		'1.17'/4, split/4,
                 '1.18'/4, slice/4,
                 '1.19'/3, rotate/3,
-		'1.20'/4, remove_at/4
+		'1.20'/4, remove_at/4,
+		'1.21'/4, insert_at/4,
+		'1.22'/3, range/3,
+		'1.23'/3, rnd_select/3
 	  ]).
 
 % 1.01 (*) Find the last element of a list.
@@ -129,7 +132,7 @@ pack(List, List1) :- '1.09'(List, List1).
 % ?- encode([a,a,a,a,b,c,c,a,a,d,e,e,e,e],X).
 % X = [[4,a],[1,b],[2,c],[2,a],[1,d][4,e]]
 encode(List, List1) :- '1.10'(List, List1).
-'1.10'([], []).
+'1.10'([], []) :- !.
 '1.10'([Xs|List], [[N,X]|List1]) :- is_list(Xs), !,
     list_len(Xs, N),
     compress(Xs, [X]),
@@ -145,7 +148,7 @@ encode(List, List1) :- '1.10'(List, List1).
 % ?- encode_modified([a,a,a,a,b,c,c,a,a,d,e,e,e,e],X).
 % X = [[4,a],b,[2,c],[2,a],d,[4,e]]
 encode_modified(List, List1) :- '1.11'(List, List1).
-'1.11'([], []).
+'1.11'([], []) :- !.
 '1.11'([Xs|List], [X|List1]) :- [X] = Xs, !,
     '1.11'(List, List1).
 '1.11'([Xs|List], [[N,X]|List1]) :- is_list(Xs), !,
@@ -230,7 +233,7 @@ drop(List, N, List1) :- '1.16'(List, N, List1).
 split(List, N, List1, List2) :- '1.17'(List, N, List1, List2).
 '1.17'(List, N, List1, List2) :- N >= 0, !,
     '1.17'(List, N, [], List1, List2).
-'1.17'(List, 0, Acc, List1, List) :-
+'1.17'(List, 0, Acc, List1, List) :- !,
     list_rev(Acc, List1).
 '1.17'([], _, Acc, List1, []) :-
     list_rev(Acc, List1).
@@ -247,8 +250,9 @@ split(List, N, List1, List2) :- '1.17'(List, N, List1, List2).
 slice(List, I, K, List1) :- '1.18'(List, I, K, List1).
 '1.18'(List, I, K, List1) :- I >= 1, K >= 1, !,
     I1 is I - 1,
+    K1 is K - I1,
     split(List, I1, _, List2),
-    split(List2, K, List3, _).
+    split(List2, K1, List1, _).
 
 % 1.19 (**) Rotate a list N places to the left.
 % Examples:
@@ -276,7 +280,43 @@ rotate(List, N, List1) :- '1.19'(List, N, List1).
 % R = [a,c,d]
 remove_at(X, List, N, List1) :- '1.20'(X, List, N, List1).
 '1.20'(X, [X|List], 1, List).
-'1.20'(X, List, N, List1) :- N > 1, list_len(List, L), N =< L, !,
+'1.20'(M, List, N, List1) :- N > 1, list_len(List, L), N =< L, !,
     N1 is N - 1,
-    split(List, N1, List2, [_|List3]),
+    split(List, N1, List2, [M|List3]),
     list:append(List2, List3, List1).
+
+% 1.21 (*) Insert an element at a given position into a list.
+% Example:
+% ?- insert_at(alfa,[a,b,c,d],2,L).
+% L = [a,alfa,b,c,d]
+insert_at(X, List, N, List1) :- '1.21'(X, List, N, List1).
+'1.21'(X, List, N, List1) :-
+    remove_at(X, List1, N, List).
+
+% 1.22 (*) Create a list containing all integers within a given range.
+% Example:
+% ?- range(4,9,L).
+% L = [4,5,6,7,8,9]
+range(M, N, List) :- '1.22'(M, N, List).
+'1.22'(N, N, [N]).
+'1.22'(M, N, List) :- M < N, !,
+    M1 is M + 1,
+    '1.22'(M1, N, List1),
+    List = [M|List1].
+
+% 1.23 (**) Extract a given number of randomly selected elements from a list.
+%       The selected items shall be put into a result list.
+% Example:
+% ?- rnd_select([a,b,c,d,e,f,g,h],3,L).
+% L = [e,d,a]
+%
+% Hint: Use the built-in random number generator random/2 and the result of problem 1.20.
+rnd_select(List, N, List1) :- '1.23'(List, N, List1).
+'1.23'(List, N, List1) :- '1.23'(List, N, [], List1).
+'1.23'(_, 0, Acc, Acc).
+'1.23'(List, N, Acc, List1) :- N > 0, !,
+    N1 is N - 1,
+    list_len(List, Len),
+    random_between(1, Len, R),
+    remove_at(M, List, R, List2),
+    '1.23'(List2, N1, [M|Acc], List1).

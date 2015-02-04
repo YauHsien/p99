@@ -46,7 +46,17 @@ case([     p99:'1.01'(b, [a,b]),
 	   p99:'1.20'(a, [a,b,c,d], 1, [b,c,d]),
       	   p99:'1.20'(b, [a,b,c,d], 2, [a,c,d]),
 	   p99:'1.20'(d, [a,b,c,d], 4, [a,b,c]),
-       not(p99:'1.20'(_, [a,b,c,d], 5, _))
+       not(p99:'1.20'(_, [a,b,c,d], 5, _)),
+       not(p99:'1.21'(alfa, [a,b,c,d], 0, _)),
+	   p99:'1.21'(alfa, [a,b], 1, [alfa,a,b]),
+  	   p99:'1.21'(alfa, [a,b], 2, [a,alfa,b]),
+       not(p99:'1.21'(alfa, [a,b,c,d], 3, _)),
+	   p99:'1.22'(4, 9, [4,5,6,7,8,9]),
+  	   p99:'1.22'(9, 9, [9]),
+       not(p99:'1.22'(10, 9, _))
+         % p99:'1.23'([a,b,c,d,e,f,g,h], 1, [_])
+         % p99:'1.23'([a,b,c,d,e,f,g,h], 3, [_,_,_])
+         % (p99:'1.23'([a,b,c,d,e,f,g,h], 8, R123_8), length(R123_8, 8))
   ]).
 
 unit_test :-
@@ -57,8 +67,36 @@ unit_test :-
 assert_all([]) :-
     format('Unit test done.~n'),
     halt.
-assert_all([G|List]) :- G, !,
-    format('~p passed.~n', [G]),
-    assert_all(List).
-assert_all([G|_]) :-
-    format('~p did not pass.~n', [G]).
+assert_all([[N,G]|List]) :- !,
+    write(G),
+    (G, solution_count(G, N) -> !,
+         format(' passed.~n'),
+         assert_all(List);
+     not(G) ->
+         format(' not passed.~n')).
+assert_all([G|List]) :- !,
+    write(G),
+    (G, solution_count(G, 1) -> !,
+         format(' passed.~n'),
+         assert_all(List);
+     not(G) ->
+         format(' not passed.~n')).
+
+% For test case p99:'1.23', when using the following case to inspect what happened,
+%
+%   solution_count(G, N) :- write('A'), write(bagof(_, G, L)),
+%       bagof(_, G, L), write('B'),
+%
+% then the following information was showed,
+%
+%   p99:1.23([a,b,c,d,e,f,g,h],1,_G1964)Abagof(_G4878,p99:1.23([a,b,c,d,e,f,g,h],1,[g]),_G4880)?- 
+%
+% it is that when a goal is passed into solution_count/2, it is unified.
+% This fact make testing random predicates hard, because bagof/3 will
+% not take same goals at next run.
+%
+solution_count(G, N) :-
+    bagof(_, G, L),
+    length(L, M),
+    (N == M -> !;
+     format(' does not have ~d solutions (~d found);', [N, M]), fail).
