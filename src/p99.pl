@@ -20,7 +20,10 @@
 		'1.20'/4, remove_at/4,
 		'1.21'/4, insert_at/4,
 		'1.22'/3, range/3,
-		'1.23'/3, rnd_select/3
+		'1.23'/3, rnd_select/3,
+		'1.24'/3,
+		'1.25'/2, rnd_permu/2,
+		'1.26'/3, combination/3
 	  ]).
 
 % 1.01 (*) Find the last element of a list.
@@ -311,7 +314,18 @@ range(M, N, List) :- '1.22'(M, N, List).
 % L = [e,d,a]
 %
 % Hint: Use the built-in random number generator random/2 and the result of problem 1.20.
-rnd_select(List, N, List1) :- '1.23'(List, N, List1).
+%
+% 1.24 (*) Lotto: Draw N different random numbers from the set 1..M.
+% The selected numbers shall be put into a result list.
+% Example:
+% ?- rnd_select(6,49,L).
+% L = [23,1,17,33,21,37]
+%
+% Hint: Combine the solutions of problems 1.22 and 1.23.
+rnd_select(List, N, List1) :- is_list(List), !,
+    '1.23'(List, N, List1).
+rnd_select(M, N, List) :-
+    '1.24'(M, N, List).
 '1.23'(List, N, List1) :- '1.23'(List, N, [], List1).
 '1.23'(_, 0, Acc, Acc).
 '1.23'(List, N, Acc, List1) :- N > 0, !,
@@ -320,3 +334,41 @@ rnd_select(List, N, List1) :- '1.23'(List, N, List1).
     random_between(1, Len, R),
     remove_at(M, List, R, List2),
     '1.23'(List2, N1, [M|Acc], List1).
+
+'1.24'(M, N, List) :-
+    range(1, N, List1),
+    rnd_select(List1, M, List).
+
+% 1.25 (*) Generate a random permutation of the elements of a list.
+% Example:
+% ?- rnd_permu([a,b,c,d,e,f],L).
+% L = [b,a,d,c,e,f]
+%
+% Hint: Use the solution of problem 1.23.
+rnd_permu(List, List1) :- '1.25'(List, List1).
+'1.25'(List, List1) :-
+    p99:list_len(List, Len),
+    rnd_select(List, Len, List1).
+
+% 1.26 (**) Generate the combinations of K distinct objects chosen from the N elements of a list
+% In how many ways can a committee of 3 be chosen from a group of 12 people? We all know that there are C(12,3) = 220 possibilities (C(N,K) denotes the well-known binomial coefficients). For pure mathematicians, this result may be great. But we want to really generate all the possibilities (via backtracking).
+%
+% Example:
+% ?- combination(3,[a,b,c,d,e,f],L).
+% L = [a,b,c] ;
+% L = [a,b,d] ;
+% L = [a,b,e] ;
+% ... 
+combination(N, List, List1) :-
+    p99:list_len(List, Len),
+    (N < Len -> '1.26'(N, List, List1);
+     N == Len -> List1 = List;
+     N > Len -> '1.26'(Len, List, List1)).
+'1.26'(0, _, []) :- !.
+'1.26'(N, List, [X|List1]) :-
+    p99:list_len(List, Len),
+    range(1, Len, Indecies),
+    member(I, Indecies),
+    remove_at(X, List, I, List2), 
+    N1 is N - 1,
+    '1.26'(N1, List2, List1).
