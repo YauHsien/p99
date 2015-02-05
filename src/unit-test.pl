@@ -53,10 +53,25 @@ case([     p99:'1.01'(b, [a,b]),
        not(p99:'1.21'(alfa, [a,b,c,d], 3, _)),
 	   p99:'1.22'(4, 9, [4,5,6,7,8,9]),
   	   p99:'1.22'(9, 9, [9]),
-       not(p99:'1.22'(10, 9, _))
-         % p99:'1.23'([a,b,c,d,e,f,g,h], 1, [_])
-         % p99:'1.23'([a,b,c,d,e,f,g,h], 3, [_,_,_])
-         % (p99:'1.23'([a,b,c,d,e,f,g,h], 8, R123_8), length(R123_8, 8))
+       not(p99:'1.22'(10, 9, _)),
+         % Not easy to test using solution_count/2:
+         %   p99:'1.23'([a,b,c,d,e,f,g,h], 1, [_])
+         %   p99:'1.23'([a,b,c,d,e,f,g,h], 3, [_,_,_])
+         %   (p99:'1.23'([a,b,c,d,e,f,g,h], 8, R123_8), p99:list_len(R123_8, 8))
+	 %   p99:'1.24'(6, 49, [_,_,_,_,_,_])
+           [random,
+	    p99:'1.23'([a,b,c,d,e,f,g,h], 1, [_])],
+	   [random,
+	    p99:'1.23'([a,b,c,d,e,f,g,h], 3, [_,_,_])],
+	   [random,
+	    (p99:'1.23'([a,b,c,d,e,f,g,h], 8, R123_8), p99:list_len(R123_8, 8))],
+           [random,
+	    (p99:'1.24'(6, 49, R124_6_49), p99:list_len(R124_6_49, 6))],
+	   [random,
+	    (p99:'1.25'([a,b,c,d,e,f], R125_6), p99:list_len(R125_6, 6),
+	     forall(member(X,[a,b,c,d,e,f]), member(X,R125_6)))],
+	   [120,
+	    combination(3, [a,b,c,d,e,f], X)]
   ]).
 
 unit_test :-
@@ -67,14 +82,21 @@ unit_test :-
 assert_all([]) :-
     format('Unit test done.~n'),
     halt.
+assert_all([[random,G]|List]) :- !,
+    write(G),
+    (G -> !,
+         format(' passed.~n'),
+         assert_all(List);
+     format(' not passed.~n')).
 assert_all([[N,G]|List]) :- !,
     write(G),
-    (G, solution_count(G, N) -> !,
+    solution_count(G, C),
+    (G, C == N -> !,
          format(' passed.~n'),
          assert_all(List);
      not(G) ->
          format(' not passed.~n')).
-assert_all([G|List]) :- !,
+assert_all([G|List]) :- not(is_list(G)),
     write(G),
     (G, solution_count(G, 1) -> !,
          format(' passed.~n'),
@@ -96,7 +118,7 @@ assert_all([G|List]) :- !,
 % not take same goals at next run.
 %
 solution_count(G, N) :-
-    bagof(_, G, L),
-    length(L, M),
+    bagof(X, G, L), write(L), nl,
+    length(L, M), write(N), nl, write(M), nl,
     (N == M -> !;
      format(' does not have ~d solutions (~d found);', [N, M]), fail).
