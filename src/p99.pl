@@ -294,7 +294,9 @@ remove_at(X, List, N, List1) :- '1.20'(X, List, N, List1).
 % L = [a,alfa,b,c,d]
 insert_at(X, List, N, List1) :- '1.21'(X, List, N, List1).
 '1.21'(X, List, N, List1) :-
-    remove_at(X, List1, N, List).
+    N1 is N -1,
+    split(List, N1, List2, List3),
+    list:append(List2, [X|List3], List1).
 
 % 1.22 (*) Create a list containing all integers within a given range.
 % Example:
@@ -372,3 +374,48 @@ combination(N, List, List1) :-
     remove_at(X, List, I, List2), 
     N1 is N - 1,
     '1.26'(N1, List2, List1).
+
+% 1.27 (**) Group the elements of a set into disjoint subsets.
+% a) In how many ways can a group of 9 people work in 3 disjoint subgroups of 2, 3 and 4 persons? Write a predicate that generates all the possibilities via backtracking.
+%
+% Example:
+% ?- group3([aldo,beat,carla,david,evi,flip,gary,hugo,ida],G1,G2,G3).
+% G1 = [aldo,beat], G2 = [carla,david,evi], G3 = [flip,gary,hugo,ida]
+% ...
+%
+% b) Generalize the above predicate in a way that we can specify a list of group sizes and the predicate will return a list of groups.
+%
+% Example:
+% ?- group([aldo,beat,carla,david,evi,flip,gary,hugo,ida],[2,2,5],Gs).
+% Gs = [[aldo,beat],[carla,david],[evi,flip,gary,hugo,ida]]
+% ...
+%
+% Note that we do not want permutations of the group members; i.e. [[aldo,beat],...] is the same solution as [[beat,aldo],...]. However, we make a difference between [[aldo,beat],[carla,david],...] and [[carla,david],[aldo,beat],...].
+%
+% You may find more about this combinatorial problem in a good book on discrete mathematics under the term "multinomial coefficients". 
+group3([], [], [], []).
+group3([X|List], [X|List1], List2, List3) :-
+    group3(List, List1, List2, List3),
+    list_len(List1, N), N < 2.
+group3([X|List], List1, [X|List2], List3) :-
+    group3(List, List1, List2, List3),
+    list_len(List2, N), N < 3.
+group3([X|List], List1, List2, [X|List3]) :-
+    group3(List, List1, List2, List3),
+    list_len(List3, N), N < 4.
+
+group([], Spec, List) :-
+    list_len(Spec, LenS),
+    dupli([[]], LenS, List).
+group([X|List], Spec, List1) :-
+    group(List, Spec, List2),
+    list_len(Spec, LenS),
+    range(1, LenS, Indecis),
+    member(I, Indecis),
+    remove_at(N, Spec, I, _),
+    remove_at(List3, List2, I, List4),
+    list_len(List3, M),
+    M < N,
+    insert_at([X|List3], List4, I, List1).
+
+
