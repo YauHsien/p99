@@ -23,7 +23,9 @@
 		'1.23'/3, rnd_select/3,
 		'1.24'/3,
 		'1.25'/2, rnd_permu/2,
-		'1.26'/3, combination/3
+		'1.26'/3, combination/3,
+		group3/4,
+		group3
 	  ]).
 
 % 1.01 (*) Find the last element of a list.
@@ -366,8 +368,8 @@ combination(N, List, List1) :-
     (N < Len -> '1.26'(N, List, List1);
      N == Len -> List1 = List;
      N > Len -> '1.26'(Len, List, List1)).
-'1.26'(0, _, []) :- !.
-'1.26'(N, List, [X|List1]) :-
+'1.26'(0, _, []).
+'1.26'(N, List, [X|List1]) :- N > 0, !,
     p99:list_len(List, Len),
     range(1, Len, Indecies),
     member(I, Indecies),
@@ -418,4 +420,17 @@ group([X|List], Spec, List1) :-
     M < N,
     insert_at([X|List3], List4, I, List1).
 
-
+% 1.28 (**) Sorting a list of lists according to length of sublists
+%       a) We suppose that a list (InList) contains elements that are lists themselves. The objective is to sort the elements of InList according to their length. E.g. short lists first, longer lists later, or vice versa.
+%
+% Example:
+% ?- lsort([[a,b,c],[d,e],[f,g,h],[d,e],[i,j,k,l],[m,n],[o]],L).
+% L = [[o], [d, e], [d, e], [m, n], [a, b, c], [f, g, h], [i, j, k, l]]
+%
+%       b) Again, we suppose that a list (InList) contains elements that are lists themselves. But this time the objective is to sort the elements of InList according to their length frequency; i.e. in the default, where sorting is done ascendingly, lists with rare lengths are placed first, others with a more frequent length come later.
+%
+% Example:
+% ?- lfsort([[a,b,c],[d,e],[f,g,h],[d,e],[i,j,k,l],[m,n],[o]],L).
+% L = [[i, j, k, l], [o], [a, b, c], [f, g, h], [d, e], [d, e], [m, n]]
+%
+%    Note that in the above example, the first two lists in the result L have length 4 and 1, both lengths appear just once. The third and forth list have length 3; there are two list of this length. And finally, the last three lists have length 2. This is the most frequent length. 

@@ -1,6 +1,22 @@
 :- module(unit_test, [unit_test/0]).
 
-% For the fact case([ p99:'xxyyzz' ]),
+unit_test :-
+    case(List),
+    format('Unit test start.~n'),
+    assert_all(List).
+
+assert_all([]) :-
+    format('Unit test done.~n'),
+    halt.
+assert_all([G|List]) :- not(is_list(G)),
+    write(G),
+    (G -> !,
+         format(' passed.~n'),
+         assert_all(List);
+     not(G) ->
+         format(' not passed.~n')).
+
+% By using an undefined procedure as a case, p99:'xxyyzz',
 % unit test may be result in following messages:
 %   ERROR: Prolog initialisation failed:
 %   ERROR: unit_test:assert_all/1: Undefined procedure: p99:xxyyzz/0
@@ -50,75 +66,22 @@ case([     p99:'1.01'(b, [a,b]),
        not(p99:'1.21'(alfa, [a,b,c,d], 0, _)),
 	   p99:'1.21'(alfa, [a,b], 1, [alfa,a,b]),
   	   p99:'1.21'(alfa, [a,b], 2, [a,alfa,b]),
-       not(p99:'1.21'(alfa, [a,b,c,d], 3, _)),
+           p99:'1.21'(alfa, [a,b], 3, [a,b,alfa]),
 	   p99:'1.22'(4, 9, [4,5,6,7,8,9]),
   	   p99:'1.22'(9, 9, [9]),
        not(p99:'1.22'(10, 9, _)),
-         % Not easy to test using solution_count/2:
-         %   p99:'1.23'([a,b,c,d,e,f,g,h], 1, [_])
-         %   p99:'1.23'([a,b,c,d,e,f,g,h], 3, [_,_,_])
-         %   (p99:'1.23'([a,b,c,d,e,f,g,h], 8, R123_8), p99:list_len(R123_8, 8))
-	 %   p99:'1.24'(6, 49, [_,_,_,_,_,_])
-           [random,
-	    p99:'1.23'([a,b,c,d,e,f,g,h], 1, [_])],
-	   [random,
-	    p99:'1.23'([a,b,c,d,e,f,g,h], 3, [_,_,_])],
-	   [random,
-	    (p99:'1.23'([a,b,c,d,e,f,g,h], 8, R123_8), p99:list_len(R123_8, 8))],
-           [random,
-	    (p99:'1.24'(6, 49, R124_6_49), p99:list_len(R124_6_49, 6))],
-	   [random,
-	    (p99:'1.25'([a,b,c,d,e,f], R125_6), p99:list_len(R125_6, 6),
-	     forall(member(X,[a,b,c,d,e,f]), member(X,R125_6)))],
-	   [120,
-	    combination(3, [a,b,c,d,e,f], X)]
+	   p99:'1.23'([a,b,c,d,e,f,g,h], 1, [_]),
+	   p99:'1.23'([a,b,c,d,e,f,g,h], 3, [_,_,_]),
+	  (p99:'1.23'([a,b,c,d,e,f,g,h], 8, R123_8), p99:list_len(R123_8, 8)),
+	  (p99:'1.24'(6, 49, R124_6_49), p99:list_len(R124_6_49, 6)),
+	  (p99:'1.25'([a,b,c,d,e,f], R125_6), p99:list_len(R125_6, 6),
+	   forall(member(X,[a,b,c,d,e,f]), member(X,R125_6))),
+	  (p99:'1.26'(3, [a,b,c,d,e,f], X), list_len(X, 3)),
+	  (p99:group3([aldo,beat,carla,david,evi,flip,gary,hugo,ida],G27_1,G27_2,G27_3),
+           length(G27_1, 2), length(G27_2, 3), length(G27_3, 4)),
+	  (p99:group([aldo,beat,carla,david,evi,flip,gary,hugo,ida],[2,2,5],G28),
+	   length(G28, 3),
+	   remove_at(G28_1, G28, 1, _), length(G28_1, 2),
+	   remove_at(G28_2, G28, 2, _), length(G28_2, 2),
+	   remove_at(G28_3, G28, 3, _), length(G28_3, 5))
   ]).
-
-unit_test :-
-    case(List),
-    format('Unit test start.~n'),
-    assert_all(List).
-
-assert_all([]) :-
-    format('Unit test done.~n'),
-    halt.
-assert_all([[random,G]|List]) :- !,
-    write(G),
-    (G -> !,
-         format(' passed.~n'),
-         assert_all(List);
-     format(' not passed.~n')).
-assert_all([[N,G]|List]) :- !,
-    write(G),
-    solution_count(G, C),
-    (G, C == N -> !,
-         format(' passed.~n'),
-         assert_all(List);
-     not(G) ->
-         format(' not passed.~n')).
-assert_all([G|List]) :- not(is_list(G)),
-    write(G),
-    (G, solution_count(G, 1) -> !,
-         format(' passed.~n'),
-         assert_all(List);
-     not(G) ->
-         format(' not passed.~n')).
-
-% For test case p99:'1.23', when using the following case to inspect what happened,
-%
-%   solution_count(G, N) :- write('A'), write(bagof(_, G, L)),
-%       bagof(_, G, L), write('B'),
-%
-% then the following information was showed,
-%
-%   p99:1.23([a,b,c,d,e,f,g,h],1,_G1964)Abagof(_G4878,p99:1.23([a,b,c,d,e,f,g,h],1,[g]),_G4880)?- 
-%
-% it is that when a goal is passed into solution_count/2, it is unified.
-% This fact make testing random predicates hard, because bagof/3 will
-% not take same goals at next run.
-%
-solution_count(G, N) :-
-    bagof(X, G, L), write(L), nl,
-    length(L, M), write(N), nl, write(M), nl,
-    (N == M -> !;
-     format(' does not have ~d solutions (~d found);', [N, M]), fail).
