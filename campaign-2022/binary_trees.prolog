@@ -31,6 +31,7 @@ cbal_tree(N, t(x,L,R)) :-
     ; cbal_tree(M2, L),
       cbal_tree(M1, R)
     ).
+% The third clause of `cbal_tree/2` will generate duplicate cases.
 
 %% 4.03
 %  symmetric/1
@@ -75,3 +76,61 @@ add(N, t(M,L,R), t(M,L,R1)) :- add(N, R, R1).
 test_symmetric(L) :-
     construct(L, T), !,
     symmetric(T).
+
+%% 4.05 Generate-and-test paradigm
+%  sym_cbal_trees/2
+%  sym_cbal_trees(+N, -List)
+%  . . . to generate all symmetric, completely balanced binary trees with a given number of nodes.
+
+sym_cbal_trees(N, L) :-
+    setof(T, (cbal_tree(N, T), symmetric(T)), L).
+
+%% 4.06
+%  hbal_tree/2
+%  hbal_tree(+H, -Tree)
+%  . . . to generate a Height-Balanced Binary Trees with a given height `H`.
+
+hbal_tree(0, nil).
+hbal_tree(1, t(x,nil,nil)) :- !.
+hbal_tree(H, t(x,L,R)) :- H > 1,
+    N_ is H - 1,
+    N__ is H - 2,
+    member(N1, [N_,N__]),
+    member(N2, [N_,N__]),
+    not((N1=:=N__, N2=:=N__)),
+    hbal_tree(N1, L),
+    hbal_tree(N2, R).
+
+%% 4.07
+%  hbal_tree_nodes/2
+%  hbal_tree_nodes(+N, -Tree)
+%  . . . to generate a Height-Balanced Binary Trees by a given number of nodes `N`.
+%  By using following building blocks:
+%  MaxN = 2**H - 1
+%  minNodes(+H, -N)
+%  maxHeight(+N, -H)
+
+minNodes(0, 0) :- !.
+minNodes(H, N) :- H > 0,
+    H_ is H - 1,
+    N is 2**H_. % N is (2**H_ - 1) + 1.
+
+maxHeight(0, 0) :- !.
+maxHeight(N, H) :- N > 0, !,
+    maxHeight(N, 0, H).
+
+maxHeight(N, A, H) :-
+    minNodes(A, N0),
+    (   N > N0, !,
+        A1 is A + 1,
+        maxHeight(N, A1, H)
+    ;   N =:= N0, !,
+        H is A
+    ;   N < N0, !,
+        H is A - 1
+    ).
+
+hbal_tree_nodes(N, T) :-
+    maxHeight(N, H),
+    hbal_tree(H, T).
+% . . . and I got `315` Height-Balanced Binary Trees with nodes number `15`.
