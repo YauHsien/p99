@@ -10,3 +10,8 @@ https://sites.google.com/site/prologsite/prolog-problems
 ### Campaign 2022
 
 - 2022/09/23 I begin an exercise campaign, starting from the Binary Trees problem set.
+
+### Campaign 2024
+New exercise done for this same [problem set](https://www.ic.unicamp.br/~meidanis/courses/mc336/2009s2/prolog/problemas/).
+
+- 2024/10/26 I'd done until "P80 (***)". 我做到要吐了。
